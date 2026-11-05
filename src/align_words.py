@@ -2,7 +2,10 @@
 """Forced-align supplied lyrics. Missing words are never assigned guessed timestamps."""
 import argparse,json,re,sys
 from pathlib import Path
-try:\n    from src.validators import validate_word_timings\nexcept ModuleNotFoundError:\n    from validators import validate_word_timings
+try:
+    from src.validators import validate_word_timings
+except ModuleNotFoundError:
+    from validators import validate_word_timings
 ROOT=Path(__file__).resolve().parents[1]
 def main():
  p=argparse.ArgumentParser();p.add_argument("--audio",type=Path,default=ROOT/"temp/vocals.wav");p.add_argument("--lyrics",type=Path,default=ROOT/"input/lyrics.txt");p.add_argument("--output",type=Path,default=ROOT/"temp/timings.json");p.add_argument("--language",default="en");p.add_argument("--device",default="cpu",choices=["cpu","cuda","auto"]);a=p.parse_args()
