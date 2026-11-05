@@ -12,8 +12,11 @@ def main():
     a=p.parse_args(); src=a.input.resolve(); tmp=a.temp.resolve()
     if not src.is_file(): p.error(f"Missing audio: {src}")
     tmp.mkdir(parents=True,exist_ok=True)
-    cmd=[sys.executable,"-m","demucs","--two-stems=vocals","-n",a.model,"-o",str(tmp/"demucs")]
-    if a.device!="auto": cmd += ["-d",a.device]
+    device=a.device
+    if device=="auto":
+        import torch
+        device="cuda" if torch.cuda.is_available() else "cpu"
+    cmd=[sys.executable,"-m","demucs","--two-stems=vocals","-n",a.model,"-o",str(tmp/"demucs"),"-d",device]
     cmd.append(str(src)); print("[demucs] Separating audio...",flush=True)
     subprocess.run(cmd,check=True)
     track=tmp/"demucs"/a.model/src.stem
