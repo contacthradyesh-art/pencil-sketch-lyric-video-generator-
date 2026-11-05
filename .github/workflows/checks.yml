@@ -1,4 +1,4 @@
-name: Project checks
+name: Project checks (syntax, tests and frontend)
 on:
   push:
     branches: [main]
