@@ -1,39 +1,60 @@
 # Pencil Sketch Studio AI
 
-A mobile-friendly web studio and video-editing workspace for creating pencil-sketch lyric videos. It combines Demucs vocal separation, WhisperX forced alignment, a Canvas sketch renderer, Puppeteer and FFmpeg.
+A browser-based creative studio for generating hand-drawn pencil-sketch lyric videos from an uploaded song and user-supplied lyrics.
 
-## Current scope
-- Browser-based project creation and upload UI.
-- Visual style selection: cinematic, minimal, romantic, emotional, nature and story.
-- Background processing status and MP4 preview/download.
-- Demucs + WhisperX + Puppeteer + FFmpeg pipeline.
-- Headless rendering suitable for Codespaces/Linux.
+## What is implemented
 
-The timeline on the current UI is an editor workspace preview, not yet a full drag-and-drop multitrack editor. Visual style presets currently influence the project metadata and drawing plan; each preset still needs its own complete art-direction library. Do not treat the application as production-ready until the real-song workflow and tests pass.
+- Responsive dark studio dashboard.
+- MP3/WAV/M4A upload and in-browser audio preview with play/pause and timeline seeking.
+- Lyrics input, English/Hindi language selection and six visual style presets.
+- 720p/1080p and 30/60 FPS render settings.
+- FastAPI upload API, background render job and progress/status endpoints.
+- Demucs vocal separation, WhisperX forced word alignment and validation (no guessed word timings).
+- Style-aware Canvas drawing scenes, paper grain and word-by-word lyric reveal.
+- Puppeteer frame rendering and FFmpeg MP4 export with the uploaded original audio.
+- MP4 preview/download after successful render.
+- GitHub Actions syntax/unit checks and Codespaces setup.
 
-## Requirements
-Python 3.10/3.11 recommended, Node.js 20+, FFmpeg and sufficient disk/RAM. CPU works but Demucs/WhisperX can be slow in small Codespaces. CUDA is optional.
+## Run in GitHub Codespaces
 
-## Run the web studio
+Open the repository in Codespaces. The devcontainer installs FFmpeg and Devanagari fonts. Then run:
+
 ```bash
 bash run.sh
 ```
-Open forwarded port 8000 in Codespaces. Upload a song and lyrics, choose a style and start rendering.
 
-## Run pipeline directly
-Place files at input/song.mp3 and input/lyrics.txt, then:
+Open forwarded port 8000. First-time setup downloads large Python/ML packages and model weights.
+
+## Run locally
+
+Requirements: Python 3.11, Node.js 20+, FFmpeg/ffprobe.
+
+```bash
+bash run.sh
+```
+
+## Render from the command line
+
+Put a song at `input/song.mp3` and matching lyrics at `input/lyrics.txt`, then:
+
 ```bash
 bash run.sh --render
 ```
 
-## Configuration
-Environment variables: LANGUAGE=en|hi, DEVICE=cpu|cuda|auto, FPS=30, WIDTH=1920, HEIGHT=1080, FFMPEG_PRESET=veryfast, FFMPEG_CRF=20.
+## Settings
 
-## Alignment policy
-Word timestamps come from forced alignment, not guessed distributions. If the model cannot align supplied words, inspect temp/timings.json and correct the lyrics or use a manual correction workflow. Language/model support varies.
+The web form supports:
+- Language: English or Hindi.
+- Style: cinematic, minimal, romantic, emotional, nature or story.
+- Resolution: 720p or 1080p.
+- Frame rate: 30 or 60 FPS.
+- Processing: CPU, auto-detect or CUDA.
 
-## Important limitations
-- First launch downloads large ML dependencies and model weights.
-- A small Codespace may not have enough memory for long 1080p/30fps renders.
-- The current web editor has a timeline overview; full interactive multitrack editing, scene authoring, per-style illustration packs, persistent project library and manual word-timing editor remain future implementation work.
-- Test with a short, rights-cleared song before long renders.
+## Important notes and current limitations
+
+- Forced alignment quality depends on the language, audio clarity, lyrics accuracy and WhisperX alignment-model support. The pipeline intentionally fails when word alignment coverage is too low instead of fabricating timestamps.
+- CPU-only Codespaces can take a long time and may run out of RAM/disk for long tracks or 1080p/60 FPS. Start with a short sample and 720p/30 FPS.
+- The current timeline provides audio preview and seeking plus a visual track overview. It is not yet a full multitrack drag-and-drop editor.
+- Manual per-word timing correction, scene/image uploads, persistent project library, per-scene keyframes, and advanced transition/effect controls are not implemented yet.
+- The visual presets use generated Canvas pencil strokes and motifs. They are not yet a semantic AI illustration system that understands each lyric and invents a unique storyboard for every line.
+- Test the complete pipeline with a short, rights-cleared song before relying on longer renders.
