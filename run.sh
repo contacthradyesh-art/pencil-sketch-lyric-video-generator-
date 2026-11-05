@@ -19,5 +19,5 @@ if [[ "${1:-}" == "--render" ]]; then
 else
   echo "Starting Pencil Sketch Studio at http://localhost:8000"
   echo "In Codespaces, open forwarded port 8000."
-  exec python -m src.server
+  exec python -m uvicorn src.server:app --host 0.0.0.0 --port 8000
 fi
