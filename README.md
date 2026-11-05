@@ -6,6 +6,7 @@ A browser-based creative studio for generating hand-drawn pencil-sketch lyric vi
 
 - Responsive dark studio dashboard.
 - MP3/WAV/M4A upload and in-browser audio preview with play/pause and timeline seeking.
+- Manual per-word start/end timing correction after the first alignment, with validated save and re-render.
 - Lyrics input, English/Hindi language selection and six visual style presets.
 - 720p/1080p and 30/60 FPS render settings.
 - FastAPI upload API, background render job and progress/status endpoints.
@@ -55,6 +56,6 @@ The web form supports:
 - Forced alignment quality depends on the language, audio clarity, lyrics accuracy and WhisperX alignment-model support. The pipeline intentionally fails when word alignment coverage is too low instead of fabricating timestamps.
 - CPU-only Codespaces can take a long time and may run out of RAM/disk for long tracks or 1080p/60 FPS. Start with a short sample and 720p/30 FPS.
 - The current timeline provides audio preview and seeking plus a visual track overview. It is not yet a full multitrack drag-and-drop editor.
-- Manual per-word timing correction, scene/image uploads, persistent project library, per-scene keyframes, and advanced transition/effect controls are not implemented yet.
+- Scene/image uploads, persistent project library, per-scene keyframes, and advanced transition/effect controls are not implemented yet.
 - The visual presets use generated Canvas pencil strokes and motifs. They are not yet a semantic AI illustration system that understands each lyric and invents a unique storyboard for every line.
 - Test the complete pipeline with a short, rights-cleared song before relying on longer renders.
