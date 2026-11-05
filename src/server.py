@@ -28,11 +28,11 @@ def video():
     if not p.exists(): raise HTTPException(404,"No rendered video yet.")
     return FileResponse(p,media_type="video/mp4",filename="pencil-sketch-lyrics.mp4")
 
-def run_pipeline(style,language,device):
+def run_pipeline(style,language,device,width,height,fps):
     global PROCESS
     try:
         JOB.update(status="running",stage="Audio separation",progress=3,message="Starting audio separation…",error=None)
-        env=os.environ.copy(); env.update({"STYLE":style,"LANGUAGE":language,"DEVICE":device})
+        env=os.environ.copy(); env.update({"STYLE":style,"LANGUAGE":language,"DEVICE":device,"WIDTH":str(width),"HEIGHT":str(height),"FPS":str(fps)})
         PROCESS=subprocess.Popen([sys.executable,"src/main.py"],cwd=ROOT,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,bufsize=1)
         stage_map=[("demucs","Audio separation",12),("align","Word alignment",35),("drawing","Drawing plan",52),("render","Pencil animation rendering",65),("ffmpeg","Final video encoding",90)]
         assert PROCESS.stdout is not None
@@ -51,14 +51,14 @@ def run_pipeline(style,language,device):
     finally: PROCESS=None
 
 @app.post("/api/generate")
-async def generate(song:UploadFile=File(...),lyrics:str=Form(...),style:str=Form("cinematic"),language:str=Form("en"),device:str=Form("cpu")):
+async def generate(song:UploadFile=File(...),lyrics:str=Form(...),style:str=Form("cinematic"),language:str=Form("en"),device:str=Form("cpu"),resolution:str=Form("1080p"),fps:int=Form(30)):
     if not song.filename or Path(song.filename).suffix.lower() not in {".mp3",".wav",".m4a"}:
         raise HTTPException(400,"Upload an MP3, WAV or M4A audio file.")
     if not lyrics.strip(): raise HTTPException(400,"Lyrics cannot be empty.")
     allowed={"cinematic","minimal","romantic","emotional","nature","story","custom"}
     if style not in allowed: raise HTTPException(400,"Unknown visual style.")
     if language not in {"en","hi"}: raise HTTPException(400,"Language must be en or hi.")
-    if device not in {"cpu","cuda","auto"}: raise HTTPException(400,"Invalid compute device.")
+    if device not in {"cpu","cuda","auto"}: raise HTTPException(400,"Invalid compute device.")\n    if resolution not in {"720p","1080p"}: raise HTTPException(400,"Resolution must be 720p or 1080p.")\n    if fps not in {30,60}: raise HTTPException(400,"FPS must be 30 or 60.")
     async with _async_lock:
         with LOCK:
             if JOB["status"] in {"queued","running"}: raise HTTPException(409,"A render is already running.")
@@ -76,7 +76,7 @@ async def generate(song:UploadFile=File(...),lyrics:str=Form(...),style:str=Form
         (INPUT/"lyrics.txt").write_text(lyrics.strip()+"\n",encoding="utf-8")
         with LOCK:
             JOB.update(id=str(uuid.uuid4()),status="queued",stage="Queued",progress=0,message="Project queued.",error=None)
-            threading.Thread(target=run_pipeline,args=(style,language,device),daemon=True).start()
+            width,height=(1280,720) if resolution=="720p" else (1920,1080)\n            threading.Thread(target=run_pipeline,args=(style,language,device,width,height,fps),daemon=True).start()
         return {"job_id":JOB["id"],"status":"queued"}
 
 import asyncio
