@@ -1,8 +1,16 @@
-(()=>{const c=document.getElementById("paper"),x=c.getContext("2d");let plan={words:[],paths:[]};const paper=()=>{x.fillStyle="#f4ecd9";x.fillRect(0,0,1920,1080);for(let i=0;i<16000;i++){let a=Math.random()*0.035;x.fillStyle="rgba(90,70,40,"+a+")";x.fillRect(Math.random()*1920,Math.random()*1080,1,1)}};
-function loadPlan(p){plan=p;window.__rendererReady=true}
-function drawFrame(t){paper();x.strokeStyle="#333";x.lineWidth=2.5;x.lineCap="round";for(const p of plan.paths||[]){if(p.type==="line"){x.beginPath();x.moveTo(...p.points[0]);x.lineTo(...p.points[1]);x.stroke()}}
-const shown=plan.words.filter(w=>Number(w.start)<=t);x.fillStyle="#24211d";x.font='54px "Caveat", "Comic Sans MS", cursive';x.textAlign="center";x.textBaseline="middle";let line="",start=0, row=0;
-for(const w of shown){line+=(line?" ":"")+w.word;if(w.end>t)break;if(line.length>38){x.fillText(line,960,330+row*90);line="";row++}}
-if(line)x.fillText(line,960,330+row*90);
-}
-window.PencilSketch={loadPlan,drawFrame};window.__rendererReady=false;paper()})();
+(()=> {
+ const canvas=document.getElementById("paper"),ctx=canvas.getContext("2d"),W=1920,H=1080;
+ let plan={words:[],paths:[]},grain=document.createElement("canvas"),g=grain.getContext("2d");
+ grain.width=W;grain.height=H;g.fillStyle="#f1e7d3";g.fillRect(0,0,W,H);
+ // Deterministic paper grain: identical across frames, avoiding flicker.
+ let seed=72431;const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
+ for(let i=0;i<24000;i++){const v=rand();g.fillStyle=v>.5?"rgba(80,65,45,.035)":"rgba(255,255,255,.11)";g.fillRect(rand()*W,rand()*H,1+rand()*2,1+rand()*2)}
+ function loadPlan(p){plan=p;window.__rendererReady=true}
+ function styleColors(){const s=plan.style||"cinematic";return s==="emotional"?["#403b3d","#766a6a"]:s==="nature"?["#435448","#78816d"]:s==="romantic"?["#67505b","#a47a81"]:["#393530","#777064"]}
+ function drawPath(path,t){const pts=path.points||[];if(pts.length<2)return;const start=Number(path.start||0),duration=Math.max(.01,Number(path.duration||5)),progress=Math.max(0,Math.min(1,(t-start)/duration));if(progress<=0)return;let lengths=[],total=0;for(let i=1;i<pts.length;i++){const d=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);lengths.push(d);total+=d}let remaining=total*progress;ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<pts.length;i++){const a=pts[i-1],b=pts[i],d=lengths[i-1];if(remaining>=d){ctx.lineTo(b[0],b[1]);remaining-=d}else{const q=remaining/d;ctx.lineTo(a[0]+(b[0]-a[0])*q,a[1]+(b[1]-a[1])*q);break}}const [ink,soft]=styleColors();ctx.strokeStyle=ink;ctx.lineWidth=Number(path.width||2.4);ctx.lineCap="round";ctx.lineJoin="round";ctx.globalAlpha=.85;ctx.stroke();ctx.globalAlpha=1;
+ if(plan.style!=="minimal"&&progress>.3){ctx.strokeStyle=soft;ctx.lineWidth=.65;ctx.globalAlpha=.32;ctx.beginPath();for(let k=0;k<Math.min(pts.length-1,8);k++){const a=pts[k],b=pts[k+1];ctx.moveTo(a[0]+3,a[1]+5);ctx.lineTo(b[0]+3,b[1]+5)}ctx.stroke();ctx.globalAlpha=1}
+ }
+ function drawLyrics(t){const words=plan.words||[],fontSize=Number(plan.text?.font_size||58),baseY=Number(plan.text?.y||360),maxW=Number(plan.text?.max_width||1600);ctx.fillStyle="#28241f";ctx.font=fontSize+'px "Caveat","Comic Sans MS",cursive';ctx.textBaseline="middle";ctx.textAlign="left";let x=160,row=0,lastLine=null;for(const w of words){const start=Number(w.start),end=Number(w.end);if(t<start)continue;const line=w.line_index??0;if(lastLine!==null&&line!==lastLine){row++;x=160}lastLine=line;const full=String(w.word||"").trim();const ratio=Math.max(0,Math.min(1,(t-start)/Math.max(.04,end-start)));const visible=Math.max(1,Math.ceil(full.length*ratio));const part=full.slice(0,visible);const width=ctx.measureText(full+" ").width;if(x+width>160+maxW){row++;x=160}ctx.fillText(part,x,baseY+row*fontSize*1.5);if(ratio>=1)x+=width;else break;if(row>5)break}}
+ function drawFrame(t){ctx.drawImage(grain,0,0);const [ink]=styleColors();ctx.strokeStyle=ink;ctx.lineWidth=1.5;for(const p of plan.paths||[])drawPath(p,t);drawLyrics(t);if(plan.style==="cinematic"||plan.style==="emotional"){ctx.fillStyle="rgba(50,43,35,.06)";ctx.fillRect(0,0,W,8);ctx.fillRect(0,H-8,W,8)}}
+ window.PencilSketch={loadPlan,drawFrame};window.__rendererReady=false;ctx.drawImage(grain,0,0);
+})();
