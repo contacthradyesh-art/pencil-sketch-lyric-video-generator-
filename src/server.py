@@ -84,15 +84,15 @@ async def save_timings(request:Request):
     payload=await request.json()
     words=payload.get("words") if isinstance(payload,dict) else None
     if not isinstance(words,list):raise HTTPException(400,"A words array is required.")
-    current=ROOT/"temp/timings.json"
-    if not current.is_file():raise HTTPException(409,"Generate a video first so aligned timings exist.")
-    original=json.loads(current.read_text(encoding="utf-8"))
-    try:coverage=validate_word_timings(words,original.get("expected_words",len(words)),.98)
-    except ValueError as exc:raise HTTPException(422,str(exc))
-    original["words"]=words;original["aligned_words"]=len(words);original["coverage"]=coverage;original["manual_edits"]=True
-    temp=current.with_suffix(".json.tmp");temp.write_text(json.dumps(original,ensure_ascii=False,indent=2),encoding="utf-8");temp.replace(current)
     with LOCK:
         if JOB["status"] in {"queued","running"}:raise HTTPException(409,"Wait for the current render to finish.")
+        current=ROOT/"temp/timings.json"
+        if not current.is_file():raise HTTPException(409,"Generate a video first so aligned timings exist.")
+        original=json.loads(current.read_text(encoding="utf-8"))
+        try:coverage=validate_word_timings(words,original.get("expected_words",len(words)),.98)
+        except ValueError as exc:raise HTTPException(422,str(exc))
+        original["words"]=words;original["aligned_words"]=len(words);original["coverage"]=coverage;original["manual_edits"]=True
+        temp=current.with_suffix(".json.tmp");temp.write_text(json.dumps(original,ensure_ascii=False,indent=2),encoding="utf-8");temp.replace(current)
         (OUTPUT/"final_video.mp4").unlink(missing_ok=True)
         JOB.update(id=str(uuid.uuid4()),status="queued",stage="Queued",progress=0,message="Manual timing edits saved; re-render queued.",error=None)
         threading.Thread(target=run_export,daemon=True).start()
