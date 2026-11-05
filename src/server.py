@@ -75,8 +75,7 @@ async def generate(song:UploadFile=File(...),lyrics:str=Form(...),style:str=Form
             subprocess.run(["ffmpeg","-y","-i",str(source),"-vn","-codec:a","libmp3lame","-q:a","2",str(target)],check=True,capture_output=True)
         except FileNotFoundError: raise HTTPException(500,"FFmpeg is missing. Install FFmpeg and restart the app.")
         except subprocess.CalledProcessError as exc: raise HTTPException(400,"Could not decode the uploaded audio. "+exc.stderr.decode(errors="ignore")[-400:])
-        (INPUT/"lyrics.txt").write_text(lyrics.strip()+"
-",encoding="utf-8")
+        (INPUT/"lyrics.txt").write_text(lyrics.strip()+"\n",encoding="utf-8")
         with LOCK:
             JOB.update(id=str(uuid.uuid4()),status="queued",stage="Queued",progress=0,message="Project queued.",error=None)
             width,height=(1280,720) if resolution=="720p" else (1920,1080)
