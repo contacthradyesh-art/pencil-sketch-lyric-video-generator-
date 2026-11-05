@@ -6,4 +6,5 @@ whisperx>=3.3.1
 Pillow>=10
 fastapi>=0.115
 uvicorn[standard]>=0.30
-python-multipart>=0.0.9\npytest>=8.0\n
+python-multipart>=0.0.9
+pytest>=8.0
