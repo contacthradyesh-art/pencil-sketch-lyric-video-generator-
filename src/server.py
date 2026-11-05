@@ -58,7 +58,9 @@ async def generate(song:UploadFile=File(...),lyrics:str=Form(...),style:str=Form
     allowed={"cinematic","minimal","romantic","emotional","nature","story","custom"}
     if style not in allowed: raise HTTPException(400,"Unknown visual style.")
     if language not in {"en","hi"}: raise HTTPException(400,"Language must be en or hi.")
-    if device not in {"cpu","cuda","auto"}: raise HTTPException(400,"Invalid compute device.")\n    if resolution not in {"720p","1080p"}: raise HTTPException(400,"Resolution must be 720p or 1080p.")\n    if fps not in {30,60}: raise HTTPException(400,"FPS must be 30 or 60.")
+    if device not in {"cpu","cuda","auto"}: raise HTTPException(400,"Invalid compute device.")
+    if resolution not in {"720p","1080p"}: raise HTTPException(400,"Resolution must be 720p or 1080p.")
+    if fps not in {30,60}: raise HTTPException(400,"FPS must be 30 or 60.")
     async with _async_lock:
         with LOCK:
             if JOB["status"] in {"queued","running"}: raise HTTPException(409,"A render is already running.")
@@ -73,10 +75,12 @@ async def generate(song:UploadFile=File(...),lyrics:str=Form(...),style:str=Form
             subprocess.run(["ffmpeg","-y","-i",str(source),"-vn","-codec:a","libmp3lame","-q:a","2",str(target)],check=True,capture_output=True)
         except FileNotFoundError: raise HTTPException(500,"FFmpeg is missing. Install FFmpeg and restart the app.")
         except subprocess.CalledProcessError as exc: raise HTTPException(400,"Could not decode the uploaded audio. "+exc.stderr.decode(errors="ignore")[-400:])
-        (INPUT/"lyrics.txt").write_text(lyrics.strip()+"\n",encoding="utf-8")
+        (INPUT/"lyrics.txt").write_text(lyrics.strip()+"
+",encoding="utf-8")
         with LOCK:
             JOB.update(id=str(uuid.uuid4()),status="queued",stage="Queued",progress=0,message="Project queued.",error=None)
-            width,height=(1280,720) if resolution=="720p" else (1920,1080)\n            threading.Thread(target=run_pipeline,args=(style,language,device,width,height,fps),daemon=True).start()
+            width,height=(1280,720) if resolution=="720p" else (1920,1080)
+            threading.Thread(target=run_pipeline,args=(style,language,device,width,height,fps),daemon=True).start()
         return {"job_id":JOB["id"],"status":"queued"}
 
 import asyncio
