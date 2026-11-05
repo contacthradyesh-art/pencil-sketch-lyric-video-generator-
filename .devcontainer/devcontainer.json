@@ -1,0 +1,12 @@
+{
+  "name": "Pencil Sketch Studio",
+  "image": "mcr.microsoft.com/devcontainers/python:1-3.11-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": { "version": "20" }
+  },
+  "forwardPorts": [8000],
+  "portsAttributes": {
+    "8000": { "label": "Pencil Sketch Studio", "onAutoForward": "openBrowser" }
+  },
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y ffmpeg"
+}
