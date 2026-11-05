@@ -71,6 +71,7 @@ async def generate(song:UploadFile=File(...),lyrics:str=Form(...),style:str=Form
         source=ROOT/"temp"/("upload"+suffix)
         source.write_bytes(data)
         target=INPUT/"song.mp3"
+        (OUTPUT/"final_video.mp4").unlink(missing_ok=True)
         try:
             subprocess.run(["ffmpeg","-y","-i",str(source),"-vn","-codec:a","libmp3lame","-q:a","2",str(target)],check=True,capture_output=True)
         except FileNotFoundError: raise HTTPException(500,"FFmpeg is missing. Install FFmpeg and restart the app.")
